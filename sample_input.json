@@ -1,0 +1,38 @@
+{
+    "nll_points": 67,
+    "use_bin_mapping_file": false,
+    "axis": "x",
+    "profile_axis": "z",
+    "bin_edges_on_minmax": false,
+    "output_dir": ".",
+    "mapping_file_dir": ".",
+    "base_name": "placeholder",
+    "mapping_file_name": "placeholder",
+    "mrp": [
+        0,
+        0,
+        0
+    ],
+    "Lref": 1,
+    "Sref": 1,
+    "print_fandm": true,
+    "output_type": ".dat",
+    "variables_saved": [
+        "all",
+        "cp",
+        "cfx",
+        "cfy",
+        "cfz"
+    ],
+    "variables_to_load": [
+        "X",
+        "Y",
+        "Z",
+        "CP",
+        "CFX",
+        "CFY",
+        "CFZ"
+    ],
+    "absolute_pressure_integration": false,
+    "pinf_by_qref": 0
+}

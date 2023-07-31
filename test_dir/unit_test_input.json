@@ -1,0 +1,38 @@
+{
+    "nll_points": 6,
+    "use_bin_mapping_file": false,
+    "axis": "x",
+    "profile_axis": "y",
+    "bin_edges_on_minmax": true,
+    "output_dir": "unittest",
+    "mapping_file_dir": "unittest",
+    "base_name": "test",
+    "mapping_file_name": "test",
+    "mrp": [
+        0,
+        0,
+        0
+    ],
+    "Lref": 1,
+    "Sref": 1,
+    "print_fandm": false,
+    "output_type": ".dat",
+    "variables_saved": [
+        "cp",
+        "cfx",
+        "cfy",
+        "cfz",
+        "all"
+    ],
+    "variables_loaded": [
+        "x",
+        "y",
+        "z",
+        "cp",
+        "cfx",
+        "cfy",
+        "cfz"
+    ],
+    "absolute_pressure_integration": false,
+    "pinf_by_qref": 0
+}

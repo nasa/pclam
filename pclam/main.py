@@ -15,6 +15,15 @@ from . import io as LL_io
 from . import calc as LL_calc
 from . import util as LL_util
 
+def print_debug(statement) -> None:
+    '''
+    FUNCTION TO PRINT OUT A DEBUG LINE, TO REDUCE REDUNDANCY/CODE REPETITION FOR EASIER DEBUGGING 
+    arguments: [statement](str) gets printed after the timestamp datetime.now()
+                
+    returns: None
+    '''
+
+    print(str(datetime.datetime.now()) + f' - {statement}')
 
 def run_pclam(input_file, data_name, print_file=False, base_name=None, debug=False): # run_pclam
     '''
@@ -36,7 +45,7 @@ def run_pclam(input_file, data_name, print_file=False, base_name=None, debug=Fal
     else:
         config.base_name = data_name.split('/')[-1].split('.')[0]
     
-    if debug: print(str(datetime.datetime.now())+' - loading')
+    if debug: print_debug('loading')
     
     data_by_node, data_by_elem, connectivity = LL_io.load_surf_data(data_name, config)
     
@@ -67,7 +76,7 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     '''
     
     # ensure data in is in the right format
-    if debug: print(str(datetime.datetime.now())+' - organizing')
+    if debug: print_debug('organizing')
 
     nodeData, elemData, config = LL_util.pad_data(nodeData, elemData, config)
     if nodeData is None:
@@ -105,16 +114,18 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     data_max = nodeData[:,llIndex].max() 
     data_min = nodeData[:,llIndex].min()
     data_range = data_max - data_min
+
+    offset = 0
+    eps = data_range * 1e-8
+
     if config.bin_edges_on_minmax:
         db = (data_range) / nLLpoints
-        offset = 0
     else:
-        db = data_range/ (nLLpoints - 1)
+        db = data_range / (nLLpoints - 1)
         offset = db/2
-    eps = data_range * 1e-8
     
     # if config.station_file == "0":
-    bins = np.linspace(data_min-offset-eps, data_max+offset+eps, num=nLLpoints+1)
+    bins = np.linspace(data_min - offset - eps, data_max + offset + eps, num = nLLpoints + 1)
     '''
     else:
         bins = LL_io.read_stations(config)
@@ -127,23 +138,27 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     # reload existing grid reference data if wanted and possible
     doCompute = True
     if config.use_bin_mapping_file:
-        if debug: print(str(datetime.datetime.now())+' - loading grid weights')
+
+        if debug: print_debug('loading grid weights')
         binAreas, binWeights = LL_io.load_bin_weights(config)
-        if binAreas is not None:
+
+        if binAreas:
             if binWeights.shape != (elemData.shape[0],nLLpoints,3):
                 if debug: print('Loaded bin weights incompatible with surface data. Recomputing.')
             else:
                 doCompute = False
-                if debug: print(str(datetime.datetime.now())+' - computing from reference grid')
+                if debug: print_debug('computing from reference grid')
                 binMeans = LL_util.reget_elem_bin_means(elemData, binWeights)
     
     # bin data if necessary
     if doCompute:
-        if debug: print(str(datetime.datetime.now())+' - element areas')
-        elemAreas = LL_calc.triangle_areas(elemData[:,0,:3],elemData[:,1,:3],elemData[:,2,:3])
-        binAreas, binMeans, binWeights = LL_util.get_elem_bin_means(elemData,elemAreas,bins,db,llIndex,debug)
+
+        if debug: print_debug('element areas')
+        elemAreas = LL_calc.triangle_areas(elemData[:, 0, :3],elemData[:, 1, :3],elemData[:, 2, :3])
+        binAreas, binMeans, binWeights = LL_util.get_elem_bin_means(elemData, elemAreas, bins, db, llIndex, debug)
+
         if config.use_bin_mapping_file:
-            if debug: print(str(datetime.datetime.now())+' - saving weights')
+            if debug: print_debug('saving weights')
             LL_io.save_bin_weights(config, binAreas, binWeights)
     
     # compute lineloads
@@ -151,15 +166,15 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     lineloadComponent array structure
     [ fx, fy, fz, mx, my, mz ][ p, cfx, cfy, cfz ]
     '''
-    if debug: print(str(datetime.datetime.now())+' - integrating')
+    if debug: print_debug('integrating')
     mrp = np.array(config.mrp)
-    lineloadComponents, profileVals = LL_calc.calc_lineload(mrp,nLLpoints,binMeans,binAreas,profileIndex)
+    lineloadComponents, profileVals = LL_calc.calc_lineload(mrp, nLLpoints, binMeans, binAreas, profileIndex)
     
     # clean data
-    if debug: print(str(datetime.datetime.now())+' - saving')
-    lineloadComponents = lineloadComponents / config.Sref # account for integrated area
-    lineloadComponents = lineloadComponents / db * config.Lref # normalize by bin size
-    lineloadComponents[:,3:,:] = lineloadComponents[:,3:,:] / config.Lref # account for moment arm
+    if debug: print_debug('saving')
+    lineloadComponents /= config.Sref # account for integrated area
+    lineloadComponents /= db * config.Lref # normalize by bin size
+    lineloadComponents[:, 3:, :] /= config.Lref # account for moment arm
     bins = bins[1:] - db/2 # center bin locations instead of setting at extremities
     lineloadComponents = np.dstack((lineloadComponents,np.sum(lineloadComponents,axis=2)))
     
@@ -170,10 +185,10 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     '''
     lineloads = np.zeros((nLLpoints, 14, 5))
     for i in range(5):
-        lineloads[:,0,i] = bins #/ config.Lref
-        lineloads[:,7,i] = profileVals #/ config.Lref
-    lineloads[:,1:7,:] = lineloadComponents[:,:,:]
-    lineloads[:,8:,:] = np.cumsum(lineloads[:,1:7,:], axis=0)*db/config.Lref
+        lineloads[:, 0, i] = bins #/ config.Lref
+        lineloads[:, 7, i] = profileVals #/ config.Lref
+    lineloads[:, 1:7, :] = lineloadComponents[:, :, :]
+    lineloads[:, 8:, :] = np.cumsum(lineloads[:, 1:7, :], axis=0)*db/config.Lref
 
     return lineloads
 #end make_lineload
@@ -184,8 +199,10 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
 
 if __name__ == '__main__':
     import sys
+    
+    argv_length = len(sys.argv)
 
-    if len(sys.argv) < 2 or len(sys.argv) > 6:
+    if argv_length < 2 or argv_length > 6:
         print('PCLAM.MAIN DIRECT CALL USAGE')
         print('   pclam/main.py [ data file ] [ input file   ] [ make input file flag ] [ base name  ] [ debug flag ]')
         print('      (defaults) ( required  ) ( pclam.Config ) ( False                ) ( input file ) ( False      )')
@@ -193,27 +210,26 @@ if __name__ == '__main__':
 
     run_name = sys.argv[1]
 
-    match len(sys.argv):
-        case 2:
+    match argv_length:
+
+        case 2 | 3:
             input_file = ''
+            if argv_length == 3:
+                input_file = sys.argv[2]
+
             print_file = False
             base_name = None
             debug = False
-        case 3:
-            input_file = sys.argv[2]
-            print_file = False
-            base_name = None
-            debug = False
+
         case 4 | 5:
             input_file = sys.argv[2]
             print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
+            debug = False
+
             base_name = None
-            debug = False
-        case 5:
-            input_file = sys.argv[2]
-            print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
-            base_name = sys.argv[4]
-            debug = False
+            if argv_length == 5:
+                base_name = sys.argv[4]
+
         case _:
             input_file = sys.argv[2]
             print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'

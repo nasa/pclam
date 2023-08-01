@@ -78,25 +78,27 @@ def make_lineload(config, nodeData, nodeConn, elemData=None, debug=False):      
     elemData = LL_util.node_to_element(nodeData, nodeConn, elemData, debug)
     
     # configure user-defined lineload axes
-    if config.axis.lower() == 'x':
-        llIndex = 0
-    elif config.axis.lower() == 'y':
-        llIndex = 1
-    elif config.axis.lower() == 'z':
-        llIndex = 2
-    else:
-        print('lineload axis '+config.axis+' not recognized - defaulting to x')
-        llIndex = 0
+    match config.axis.lower():
+        case 'x':
+            llIndex = 0
+        case 'y':
+            llIndex = 1
+        case 'z':
+            llIndex = 2
+        case _:
+            print('lineload axis '+config.axis+' not recognized - defaulting to x')
+            llIndex = 0
     
-    if config.profile_axis.lower() == 'x':
-        profileIndex = 0
-    elif config.profile_axis.lower() == 'y':
-        profileIndex = 1
-    elif config.profile_axis.lower() == 'z':
-        profileIndex = 2
-    else:
-        print('profile axis '+config.profile_axis+' not recognized - defaulting to z')
-        profileIndex = 2
+    match config.profile_axis.lower():
+        case 'x':
+            profileIndex = 0
+        case 'y':
+            profileIndex = 1
+        case 'z':
+            profileIndex = 2
+        case _:
+            print('profile axis '+config.profile_axis+' not recognized - defaulting to z')
+            profileIndex = 2
 
     # prepare for lineload integration
     nLLpoints = config.nll_points
@@ -190,31 +192,33 @@ if __name__ == '__main__':
         sys.exit()
 
     run_name = sys.argv[1]
-    if len(sys.argv) == 2:
-        input_file = ''
-        print_file = False
-        base_name = None
-        debug = False
-    elif len(sys.argv) == 3:
-        input_file = sys.argv[2]
-        print_file = False
-        base_name = None
-        debug = False
-    elif len(sys.argv) == 4:
-        input_file = sys.argv[2]
-        print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
-        base_name = None
-        debug = False
-    elif len(sys.argv) == 5:
-        input_file = sys.argv[2]
-        print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
-        base_name = sys.argv[4]
-        debug = False
-    else:
-        input_file = sys.argv[2]
-        print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
-        base_name = sys.argv[4]
-        debug = sys.argv[5] == 'True' or sys.argv[5] == 'true'
+
+    match len(sys.argv):
+        case 2:
+            input_file = ''
+            print_file = False
+            base_name = None
+            debug = False
+        case 3:
+            input_file = sys.argv[2]
+            print_file = False
+            base_name = None
+            debug = False
+        case 4 | 5:
+            input_file = sys.argv[2]
+            print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
+            base_name = None
+            debug = False
+        case 5:
+            input_file = sys.argv[2]
+            print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
+            base_name = sys.argv[4]
+            debug = False
+        case _:
+            input_file = sys.argv[2]
+            print_file = sys.argv[3] == 'True' or sys.argv[3] == 'true'
+            base_name = sys.argv[4]
+            debug = sys.argv[5] == 'True' or sys.argv[5] == 'true'
         
     _,_,_ = run_pclam(input_file, base_name, print_file=print_file, base_name=base_name, debug=debug)
 
